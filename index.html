@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mark Ramantsevich — AI Security &amp; Red Teaming</title>
+<meta name="description" content="Portfolio of Mark Ramantsevich — 18 y/o AI security researcher and red teamer.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230f0e0c'/%3E%3Ctext x='50' y='68' font-size='58' text-anchor='middle' fill='%23c8933a' font-family='monospace'%3E%3E%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0f0e0c;
+    --bg-elev: #161310;
+    --bg-elev-2: #1c1812;
+    --accent: #c8933a;
+    --accent-soft: rgba(200,147,58,0.12);
+    --accent-soft-2: rgba(200,147,58,0.28);
+    --text: #e8ddd0;
+    --text-muted: #a89c8c;
+    --text-faint: #6f6659;
+    --border: rgba(232,221,208,0.09);
+    --border-hover: rgba(200,147,58,0.45);
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  *{ box-sizing: border-box; margin:0; padding:0; }
+
+  html{ scroll-behavior: smooth; }
+
+  ::selection{ background: var(--accent); color: var(--bg); }
+
+  ::-webkit-scrollbar{ width:10px; }
+  ::-webkit-scrollbar-track{ background: var(--bg); }
+  ::-webkit-scrollbar-thumb{ background: var(--bg-elev-2); border-radius:6px; border:2px solid var(--bg); }
+  ::-webkit-scrollbar-thumb:hover{ background: var(--accent-soft-2); }
+  *{ scrollbar-color: var(--bg-elev-2) var(--bg); scrollbar-width: thin; }
+
+  body{
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    line-height: 1.65;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* ambient layers */
+  .grain{
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    opacity: 0.035; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .glow-orb{
+    position: fixed; top: -20%; left: 50%; transform: translateX(-50%);
+    width: 60vw; height: 60vw; max-width: 900px; max-height: 900px;
+    background: radial-gradient(circle, var(--accent-soft) 0%, transparent 70%);
+    filter: blur(60px); z-index: 0; pointer-events: none;
+    animation: drift 24s ease-in-out infinite alternate;
+  }
+  @keyframes drift{
+    0%{ transform: translateX(-52%) translateY(0); }
+    100%{ transform: translateX(-48%) translateY(30px); }
+  }
+  .cursor-glow{
+    position: fixed; top:0; left:0; width: 420px; height: 420px;
+    background: radial-gradient(circle, var(--accent-soft) 0%, transparent 70%);
+    border-radius: 50%; pointer-events: none; z-index: 0;
+    transform: translate3d(-50%,-50%,0); opacity: 0; transition: opacity .4s ease;
+    will-change: transform;
+  }
+  @media (pointer: coarse){ .cursor-glow{ display:none; } }
+
+  .wrap{ max-width: 720px; margin: 0 auto; padding: 0 1.5rem; position: relative; z-index: 1; }
+
+  /* header */
+  .hero{ padding: 7rem 0 4.5rem; }
+  .name{
+    font-family: var(--font-sans);
+    font-weight: 800;
+    font-size: clamp(2.1rem, 5vw + 1rem, 3.6rem);
+    letter-spacing: -0.02em;
+    color: var(--text);
+    display: inline-block;
+    animation: floaty 6s ease-in-out infinite;
+  }
+  @keyframes floaty{
+    0%, 100%{ transform: translateY(0); }
+    50%{ transform: translateY(-7px); }
+  }
+  .tagline{
+    margin-top: 0.9rem;
+    font-family: var(--font-mono);
+    font-size: clamp(0.95rem, 1.6vw, 1.1rem);
+    color: var(--accent);
+    min-height: 1.4em;
+  }
+  .type-cursor{
+    display: inline-block; width: 8px; height: 1em; margin-left: 2px;
+    background: var(--accent); vertical-align: -2px;
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink{ 50%{ opacity: 0; } }
+
+  .terminal{
+    margin-top: 1.75rem;
+    width: min(460px, 100%);
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .terminal-bar{
+    display: flex; gap: 6px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .terminal-bar span{ width: 9px; height: 9px; border-radius: 50%; opacity: 0.55; }
+  .dot-r{ background: #d9695f; }
+  .dot-y{ background: #d9b25f; }
+  .dot-g{ background: #6fbf73; }
+  .terminal-body{
+    padding: 13px 16px;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    min-height: 2.6em;
+  }
+  .terminal-body .prompt{ color: var(--accent); margin-right: 0.5em; }
+
+  .socials{
+    margin-top: 2.25rem;
+    display: flex; flex-wrap: wrap; gap: 1.5rem;
+  }
+  .socials a{
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    text-decoration: none;
+    position: relative;
+    padding-bottom: 3px;
+    transition: color .25s ease;
+  }
+  .socials a::after{
+    content: '';
+    position: absolute; left: 0; bottom: 0;
+    width: 100%; height: 1px;
+    background: var(--accent);
+    transform: scaleX(0); transform-origin: left;
+    transition: transform .3s ease;
+  }
+  .socials a:hover{ color: var(--text); }
+  .socials a:hover::after{ transform: scaleX(1); }
+
+  /* reveal on scroll */
+  .reveal{
+    opacity: 0; transform: translateY(22px);
+    transition: opacity .7s ease, transform .7s ease;
+  }
+  .reveal.visible{ opacity: 1; transform: translateY(0); }
+
+  /* sections */
+  main section{
+    padding: 4rem 0;
+    border-top: 1px solid var(--border);
+  }
+  .section-label{
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1.4rem;
+  }
+
+  .about-text{
+    color: var(--text-muted);
+    font-size: 1.02rem;
+    max-width: 60ch;
+  }
+  .about-text strong{ color: var(--text); font-weight: 600; }
+
+  /* projects */
+  .project-grid{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  .project-card{
+    display: block;
+    padding: 1.4rem 1.4rem 1.5rem;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    text-decoration: none;
+    color: inherit;
+    transition: transform .3s ease, border-color .3s ease, box-shadow .3s ease, background .3s ease;
+  }
+  .project-card:hover{
+    transform: translateY(-5px);
+    border-color: var(--border-hover);
+    background: var(--bg-elev-2);
+    box-shadow: 0 14px 34px -18px rgba(200,147,58,0.35);
+  }
+  .project-top{
+    display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+    margin-bottom: 0.6rem;
+  }
+  .project-top h3{
+    font-size: 1.02rem; font-weight: 600; color: var(--text);
+  }
+  .badge{
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-soft-2);
+    padding: 0.2rem 0.5rem;
+    border-radius: 100px;
+    white-space: nowrap;
+  }
+  .project-card p{
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.55;
+  }
+
+  /* roadmap */
+  .roadmap-step{ display: flex; gap: 1rem; }
+  .roadmap-gutter{
+    width: 12px; flex-shrink: 0;
+    position: relative;
+    display: flex; justify-content: center;
+  }
+  .roadmap-gutter::before{
+    content: '';
+    position: absolute;
+    top: 16px; bottom: -1.75rem; left: 50%;
+    width: 1px; background: var(--border);
+    transform: translateX(-50%);
+  }
+  .roadmap-step:last-child .roadmap-gutter::before{ display: none; }
+  .roadmap-dot{
+    width: 9px; height: 9px; border-radius: 50%;
+    margin-top: 6px;
+    background: var(--text-faint);
+    z-index: 1;
+  }
+  .roadmap-step.is-now .roadmap-dot{
+    background: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-soft);
+    animation: pulse 2.2s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%, 100%{ box-shadow: 0 0 0 4px var(--accent-soft); }
+    50%{ box-shadow: 0 0 0 8px transparent; }
+  }
+  .roadmap-body{ padding-bottom: 1.9rem; }
+  .roadmap-step:last-child .roadmap-body{ padding-bottom: 0; }
+  .roadmap-kicker{
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 0.35rem;
+  }
+  .roadmap-step.is-now .roadmap-kicker{ color: var(--accent); }
+  .roadmap-text{ color: var(--text-muted); font-size: 0.95rem; max-width: 52ch; }
+  .roadmap-step.is-now .roadmap-text{ color: var(--text); }
+
+  /* skills */
+  .tag-grid{ display: flex; flex-wrap: wrap; gap: 0.6rem; }
+  .tag{
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    padding: 0.4rem 0.85rem;
+    border-radius: 100px;
+    transition: color .25s ease, border-color .25s ease, background .25s ease, transform .25s ease;
+  }
+  .tag:hover{
+    color: var(--bg);
+    background: var(--accent);
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  /* footer */
+  footer{
+    padding: 3rem 0 4rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+  footer p{
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--text-faint);
+  }
+  .back-top{
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color .25s ease;
+  }
+  .back-top:hover{ color: var(--accent); }
+
+  @media (max-width: 640px){
+    .project-grid{ grid-template-columns: 1fr; }
+    .hero{ padding: 5rem 0 3.5rem; }
+    footer{ flex-direction: column; align-items: flex-start; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .name{ animation: none; }
+    .glow-orb{ animation: none; }
+    .roadmap-step.is-now .roadmap-dot{ animation: none; }
+    .reveal{ transition: none; opacity: 1; transform: none; }
+    .type-cursor{ animation: none; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="grain"></div>
+  <div class="glow-orb"></div>
+  <div class="cursor-glow" id="cursorGlow"></div>
+
+  <div class="wrap">
+
+    <header class="hero" id="top">
+      <h1 class="name">Mark Ramantsevich</h1>
+      <p class="tagline"><span id="taglineText"></span><span class="type-cursor"></span></p>
+
+      <div class="terminal">
+        <div class="terminal-bar">
+          <span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span>
+        </div>
+        <div class="terminal-body">
+          <span class="prompt">$</span><span id="statusText"></span><span class="type-cursor"></span>
+        </div>
+      </div>
+
+      <nav class="socials" aria-label="Social links">
+        <a href="https://github.com/dweadon" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a href="https://www.linkedin.com/in/mark-ramantsevich-1679b1400/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+        <a href="https://t.me/yohollz_dev" target="_blank" rel="noopener noreferrer">Telegram</a>
+        <a href="https://pypi.org/user/dweadon" target="_blank" rel="noopener noreferrer">PyPI</a>
+        <a href="mailto:mark.ramantsevich@outlook.com">Email</a>
+      </nav>
+    </header>
+
+    <main>
+
+      <section class="reveal" id="about">
+        <p class="section-label">01 — About</p>
+        <p class="about-text">I'm 18, mostly self-taught, and endlessly curious about how systems break — and how to stop them from breaking in the wrong hands. My time splits between writing small operating systems in C, building OSINT and recon tooling, and increasingly, red-teaming AI models to find the gaps before someone with worse intentions does. Everything on this page is <strong>real, shipped</strong>, and still being poked at.</p>
+      </section>
+
+      <section class="reveal" id="projects">
+        <p class="section-label">02 — Projects</p>
+        <div class="project-grid">
+
+          <a class="project-card reveal" href="https://github.com/dweadon/OSINT-Toolkit" target="_blank" rel="noopener noreferrer">
+            <div class="project-top">
+              <h3>OSINT Toolkit</h3>
+              <span class="badge">OSINT</span>
+            </div>
+            <p>Username enumeration and public profile discovery across multiple online platforms.</p>
+          </a>
+
+          <a class="project-card reveal" href="https://github.com/dweadon/Port-scanner-toolkit" target="_blank" rel="noopener noreferrer">
+            <div class="project-top">
+              <h3>Port Scanner Toolkit</h3>
+              <span class="badge">NETSEC</span>
+            </div>
+            <p>A fast, simple port scanner with custom range support — built to learn networks, not break them.</p>
+          </a>
+
+          <a class="project-card reveal" href="https://github.com/dweadon/NullPointer" target="_blank" rel="noopener noreferrer">
+            <div class="project-top">
+              <h3>NullPointer</h3>
+              <span class="badge">AI</span>
+            </div>
+            <p>A personal AI coding mentor, built to explain the "why" — not just autocomplete the "what."</p>
+          </a>
+
+          <a class="project-card reveal" href="https://github.com/dweadon/KairOS" target="_blank" rel="noopener noreferrer">
+            <div class="project-top">
+              <h3>KairOS</h3>
+              <span class="badge">SYSTEMS</span>
+            </div>
+            <p>A terminal-based operating system written from scratch in C — because reading about kernels wasn't enough.</p>
+          </a>
+
+        </div>
+      </section>
+
+      <section class="reveal" id="roadmap">
+        <p class="section-label">03 — Building Toward</p>
+        <div class="roadmap">
+
+          <div class="roadmap-step is-now">
+            <div class="roadmap-gutter"><span class="roadmap-dot"></span></div>
+            <div class="roadmap-body">
+              <p class="roadmap-kicker">Now</p>
+              <p class="roadmap-text">Sharpening red-team fundamentals — OSINT, recon, exploit dev — one CTF at a time.</p>
+            </div>
+          </div>
+
+          <div class="roadmap-step">
+            <div class="roadmap-gutter"><span class="roadmap-dot"></span></div>
+            <div class="roadmap-body">
+              <p class="roadmap-kicker">Next</p>
+              <p class="roadmap-text">Shipping open-source security tooling and landing a first real bug bounty.</p>
+            </div>
+          </div>
+
+          <div class="roadmap-step">
+            <div class="roadmap-gutter"><span class="roadmap-dot"></span></div>
+            <div class="roadmap-body">
+              <p class="roadmap-kicker">Then</p>
+              <p class="roadmap-text">Formal research into AI red-teaming — prompt injection, jailbreaks, model evals.</p>
+            </div>
+          </div>
+
+          <div class="roadmap-step">
+            <div class="roadmap-gutter"><span class="roadmap-dot"></span></div>
+            <div class="roadmap-body">
+              <p class="roadmap-kicker">Goal</p>
+              <p class="roadmap-text">Breaking AI systems for a living, so someone with worse intentions doesn't break them first.</p>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <section class="reveal" id="skills">
+        <p class="section-label">04 — Skills</p>
+        <div class="tag-grid">
+          <span class="tag">Python</span>
+          <span class="tag">C</span>
+          <span class="tag">JavaScript</span>
+          <span class="tag">Bash / Shell</span>
+          <span class="tag">Linux Internals</span>
+          <span class="tag">OS Development</span>
+          <span class="tag">Networking</span>
+          <span class="tag">OSINT</span>
+          <span class="tag">Red Teaming</span>
+          <span class="tag">Prompt Injection</span>
+          <span class="tag">CTFs</span>
+          <span class="tag">Git</span>
+          <span class="tag">REST APIs</span>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="reveal">
+      <p>© 2026 Mark Ramantsevich — built at 2am, running on tea and curiosity.</p>
+      <a class="back-top" href="#top">Back to top ↑</a>
+    </footer>
+
+  </div>
+
+<script>
+(function(){
+  "use strict";
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- typewriter ---------- */
+  function typeInto(el, text, speed){
+    return new Promise(function(resolve){
+      if(reduceMotion){ el.textContent = text; resolve(); return; }
+      var i = 0;
+      (function step(){
+        el.textContent = text.slice(0, i);
+        i++;
+        if(i <= text.length){ setTimeout(step, speed); }
+        else{ resolve(); }
+      })();
+    });
+  }
+
+  function deleteFrom(el, speed){
+    return new Promise(function(resolve){
+      if(reduceMotion){ el.textContent = ''; resolve(); return; }
+      var text = el.textContent;
+      var i = text.length;
+      (function step(){
+        el.textContent = text.slice(0, i);
+        i--;
+        if(i >= 0){ setTimeout(step, speed); }
+        else{ resolve(); }
+      })();
+    });
+  }
+
+  function wait(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+
+  var taglineEl = document.getElementById('taglineText');
+  var statusEl = document.getElementById('statusText');
+
+  var statusMessages = [
+    'mapping attack surfaces before someone else does',
+    'reading model outputs for things they shouldn\'t say',
+    'red team hat: on',
+    'currently, probably, inside a CTF',
+    'teaching machines to say no'
+  ];
+
+  async function statusLoop(){
+    var idx = 0;
+    while(true){
+      await typeInto(statusEl, statusMessages[idx], 38);
+      await wait(1900);
+      await deleteFrom(statusEl, 22);
+      await wait(350);
+      idx = (idx + 1) % statusMessages.length;
+      if(reduceMotion){ await wait(2200); }
+    }
+  }
+
+  typeInto(taglineEl, '18 y/o — AI Security & Red Teaming', 42).then(function(){
+    statusLoop();
+  });
+
+  /* ---------- scroll reveal ---------- */
+  var revealEls = document.querySelectorAll('.reveal');
+  if('IntersectionObserver' in window && !reduceMotion){
+    var cardIndex = 0;
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){
+          var el = entry.target;
+          if(el.classList.contains('project-card')){
+            el.style.transitionDelay = (cardIndex % 4) * 0.08 + 's';
+            cardIndex++;
+          }
+          el.classList.add('visible');
+          io.unobserve(el);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+    revealEls.forEach(function(el){ io.observe(el); });
+  } else {
+    revealEls.forEach(function(el){ el.classList.add('visible'); });
+  }
+
+  /* ---------- cursor glow ---------- */
+  var glow = document.getElementById('cursorGlow');
+  if(window.matchMedia('(pointer: fine)').matches){
+    var tx = 0, ty = 0, cx = 0, cy = 0, active = false;
+    window.addEventListener('mousemove', function(e){
+      tx = e.clientX; ty = e.clientY;
+      if(!active){ glow.style.opacity = '1'; active = true; }
+    }, { passive: true });
+    window.addEventListener('mouseleave', function(){
+      glow.style.opacity = '0'; active = false;
+    });
+    (function raf(){
+      cx += (tx - cx) * 0.12;
+      cy += (ty - cy) * 0.12;
+      glow.style.transform = 'translate3d(' + cx + 'px,' + cy + 'px,0) translate(-50%,-50%)';
+      requestAnimationFrame(raf);
+    })();
+  }
+})();
+</script>
+
+</body>
+</html>
